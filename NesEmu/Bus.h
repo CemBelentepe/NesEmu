@@ -10,7 +10,6 @@ private:
 
 public:
 	Bus()
-		: ram()
 	{
 		ram.fill(0);
 	}

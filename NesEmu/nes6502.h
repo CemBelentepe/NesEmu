@@ -1,48 +1,46 @@
 #pragma once
 
 #include <memory>
+#include <string>
+#include <vector>
 
 class Bus;
 
 class nes6502
 {
 private:
-	enum class FlagName
+	enum Flags
 	{
-		C = 0,
-		Z = 1,
-		I = 2,
-		D = 3,
-		B = 4,
-		V = 6,
-		N = 7,
+		C = 1,
+		Z = 2,
+		I = 4,
+		D = 8,
+		B = 16,
+		U = 32,
+		V = 64,
+		N = 128,
 	};
 
-	union Flag
+	struct Instruction
 	{
-		struct
-		{
-			uint8_t N : 1;
-			uint8_t V : 1;
-			uint8_t s : 1;
-			uint8_t B : 1;
-			uint8_t D : 1;
-			uint8_t I : 1;
-			uint8_t Z : 1;
-			uint8_t C : 1;
-		} named_data;
-
-		uint8_t value;
+		std::string name;
+		uint8_t(nes6502::* op)(void) = nullptr;
+		uint8_t(nes6502::* addrmode)(void) = nullptr;
+		uint8_t cycle = 0;
 	};
 
-	uint8_t reg_a;
-	uint8_t reg_x;
-	uint8_t reg_y;
-	uint8_t sp;
-	uint16_t pc;
-	Flag status_reg;
-
+	uint8_t  reg_a = 0;
+	uint8_t  reg_x = 0;
+	uint8_t  reg_y = 0;
+	uint8_t  sp = 0;
+	uint16_t pc = 0;
+	uint8_t	 status_reg = 0;
+	uint16_t addr_abs = 0;
+	uint8_t	 cycles = 0;
+	uint8_t  fetched = 0;
+	uint8_t	 opcode = 0;
 	std::unique_ptr<Bus> bus;
+	std::vector<Instruction> instructions = {/*Good luck*/ };
 
 	uint8_t IMM();	uint8_t IMP();
 	uint8_t ZP0();	uint8_t ABS();
@@ -54,8 +52,10 @@ private:
 
 public:
 	nes6502(std::unique_ptr<Bus> bus)
-		: reg_a(0), reg_x(0), reg_y(0), sp(0), pc(0), status_reg({0}), bus(std::move(bus))
+		: bus(std::move(bus))
 	{}
+
+	void fetch();
 
 	void reset();
 	void clock();
@@ -65,7 +65,7 @@ public:
 	uint8_t read(uint16_t addr);
 	void write(uint16_t addr, uint8_t data);
 
-	uint8_t getFlag(FlagName flagName);
-	void setFlag(FlagName flagName, uint8_t data);
+	uint8_t getFlag(Flags flagName);
+	void setFlag(Flags flagName, uint8_t data);
 };
 
