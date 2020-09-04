@@ -169,12 +169,19 @@ uint8_t nes6502::AND()
 
 uint8_t nes6502::ASL()
 {
-	return uint8_t();
+	fetch();
+	uint16_t temp = fetched << 1;
+	setFlag(C, (temp & 0xFF00) > 0);
+	setFlag(Z, (temp & 0x00FF) == 0);
+	setFlag(N, temp & 0x0080);
+	if (instructions[opcode].addrmode == &nes6502::IMP) reg_a = temp & 0x00FF;
+	else write(addr_abs, temp & 0x00FF);
+	return 0;
 }
 
 uint8_t nes6502::BCC()
 {
-	return uint8_t();
+	return 0;
 }
 
 uint8_t nes6502::BCS()
