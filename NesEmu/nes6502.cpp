@@ -133,7 +133,7 @@ uint8_t nes6502::IND()
 	uint8_t hi = read(pc++);
 	uint16_t ptr = (hi << 8) | lo;
 	if(lo == 0xFF)
-		addr_abs = read((ptr + 1) & 0xFF) << 8 | read(ptr);
+		addr_abs = (read((ptr + 1) & 0xFF) << 8) | read(ptr);
 	else
 		addr_abs = read(ptr + 1) << 8 | read(ptr);
 	return 0;
