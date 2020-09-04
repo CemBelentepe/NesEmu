@@ -202,6 +202,7 @@ uint8_t nes6502::ASL()
 
 uint8_t nes6502::BCC()
 {
+	branch(C, 0);
 	return 0;
 }
 
@@ -219,12 +220,18 @@ uint8_t nes6502::BEQ()
 
 uint8_t nes6502::BIT()
 {
-	return uint8_t();
+	fetch();
+	uint16_t temp = reg_a & fetched;
+	setFlag(Z, (temp & 0x00FF) == 0);
+	setFlag(N, fetched & (1 << 7));
+	setFlag(V, fetched & (1 << 6));
+	return 0;
 }
 
 uint8_t nes6502::BMI()
 {
-	return uint8_t();
+	branch(N, 1);
+	return 0;
 }
 
 uint8_t nes6502::BNE()
@@ -242,12 +249,28 @@ uint8_t nes6502::BPL()
 
 uint8_t nes6502::BRK()
 {
-	return uint8_t();
+	pc++;
+
+	setFlag(I, 1);
+	write(0x0100 + sp, (pc >> 8) & 0x00FF);
+	sp--;
+	write(0x0100 + sp, pc & 0x00FF);
+	sp--;
+	
+	setFlag(B, 1);
+	write(0x0100 + sp, status_reg);
+	sp--;
+	setFlag(B, 0);
+
+	pc = (uint16_t)read(0xFFFE) | ((uint16_t)read(0xFFFF) << 8);
+
+	return 0;
 }
 
 uint8_t nes6502::BVC()
-{
-	return uint8_t();
+{	
+	branch(V, 0);
+	return 0;
 }
 
 uint8_t nes6502::BVS()
@@ -264,12 +287,14 @@ uint8_t nes6502::CLC()
 
 uint8_t nes6502::CLD()
 {
-	return uint8_t();
+	setFlag(D, 0);
+	return 0;
 }
 
 uint8_t nes6502::CLI()
-{
-	return uint8_t();
+{	
+	setFlag(I, 0);
+	return 0;
 }
 
 uint8_t nes6502::CLV()
@@ -292,12 +317,22 @@ uint8_t nes6502::CMP()
 
 uint8_t nes6502::CPX()
 {
-	return uint8_t();
+	fetch();
+	uint16_t temp = (uint16_t)reg_x - (uint16_t)fetched;
+	setFlag(C, reg_x >= fetched);
+	setFlag(Z, (temp & 0x00FF) == 0x0000);
+	setFlag(N, temp & 0x0080);
+	return 0;
 }
 
 uint8_t nes6502::CPY()
 {
-	return uint8_t();
+	fetch();
+	uint16_t temp = (uint16_t)reg_y - (uint16_t)fetched;
+	setFlag(C, reg_y >= fetched);
+	setFlag(Z, (temp & 0x00FF) == 0x0000);
+	setFlag(N, temp & 0x0080);
+	return 0;
 }
 
 uint8_t nes6502::DEC()
@@ -314,12 +349,19 @@ uint8_t nes6502::DEX()
 
 uint8_t nes6502::DEY()
 {
-	return uint8_t();
+	reg_y--;
+	setFlag(Z, reg_y == 0x00);
+	setFlag(N, reg_y & 0x80);
+	return 0;
 }
 
 uint8_t nes6502::EOR()
 {
-	return uint8_t();
+	fetch();
+	reg_a = reg_a ^ fetched;
+	setFlag(Z, reg_a == 0x00);
+	setFlag(N, reg_a & 0x80);
+	return 1;
 }
 
 uint8_t nes6502::INC()
@@ -334,12 +376,16 @@ uint8_t nes6502::INX()
 
 uint8_t nes6502::INY()
 {
-	return uint8_t();
+	reg_y++;
+	setFlag(Z, reg_y == 0x00);
+	setFlag(N, reg_y & 0x80);
+	return 0;
 }
 
 uint8_t nes6502::JMP()
 {
-	return uint8_t();
+	pc = addr_abs;
+	return 0;
 }
 
 uint8_t nes6502::JSR()
@@ -354,12 +400,20 @@ uint8_t nes6502::LDA()
 
 uint8_t nes6502::LDX()
 {
-	return uint8_t();
+	fetch();
+	reg_x = fetched;
+	setFlag(Z, reg_x == 0x00);
+	setFlag(N, reg_x & 0x80);
+	return 1;
 }
 
 uint8_t nes6502::LDY()
 {
-	return uint8_t();
+	fetch();
+	reg_y = fetched;
+	setFlag(Z, reg_y == 0x00);
+	setFlag(N, reg_y & 0x80);
+	return 1;
 }
 
 uint8_t nes6502::LSR()
@@ -374,12 +428,18 @@ uint8_t nes6502::NOP()
 
 uint8_t nes6502::ORA()
 {
-	return uint8_t();
+	fetch();
+	reg_a = reg_a | fetched;
+	setFlag(Z, reg_y == 0x00);
+	setFlag(N, reg_y & 0x80);
+	return 1;
 }
 
 uint8_t nes6502::PHA()
 {
-	return uint8_t();
+	write(0x0100 + sp, reg_a);
+	sp--;
+	return 0;
 }
 
 uint8_t nes6502::PHP()
@@ -394,12 +454,23 @@ uint8_t nes6502::PLA()
 
 uint8_t nes6502::PLP()
 {
-	return uint8_t();
+	sp++;
+	status_reg = read(0x0100 + sp);
+	return 0;
 }
 
 uint8_t nes6502::ROL()
 {
-	return uint8_t();
+	fetch();
+	uint16_t temp = (uint16_t)fetched << 1 | getFlag(C);
+	setFlag(C, temp & 0xFF00);
+	setFlag(Z, (temp & 0x00FF) == 0);
+	setFlag(N, temp & 0x0080);
+
+	if (instructions[opcode].addrmode == &nes6502::IMP) reg_a = temp & 0x00FF;
+	else write(addr_abs, temp & 0x00FF);
+
+	return 0;
 }
 
 uint8_t nes6502::ROR()
@@ -414,12 +485,26 @@ uint8_t nes6502::RTI()
 
 uint8_t nes6502::RTS()
 {
-	return uint8_t();
+	sp++;
+	pc = (uint16_t) read(0x0100 + sp);
+	sp++;
+	pc = (uint16_t) read(0x0100 + sp) << 8;
+	pc++;
+
+	return 0;
 }
 
 uint8_t nes6502::SBC()
 {
-	return uint8_t();
+	fetch();
+	uint16_t temp = (uint16_t)reg_a + (((uint16_t)fetched) ^ 0x00FF) + (uint16_t)getFlag(C);
+	setFlag(C, temp & 0xFF00);
+	setFlag(Z, (temp & 0x00FF) == 0);
+	setFlag(N, temp & 0x0080);
+	if (((reg_a & 0x80) && !(fetched & 0x80) && !(temp & 0x80)) || (!(reg_a & 0x80) && (fetched & 0x80) && (temp & 0x80)))
+		setFlag(V, 1);
+	reg_a = temp & 0x00FF;
+	return 1;
 }
 
 uint8_t nes6502::SEC()
@@ -434,12 +519,14 @@ uint8_t nes6502::SED()
 
 uint8_t nes6502::SEI()
 {
-	return uint8_t();
+	setFlag(I, 1);
+	return 0;
 }
 
 uint8_t nes6502::STA()
 {
-	return uint8_t();
+	write(addr_abs, reg_a);
+	return 0;
 }
 
 uint8_t nes6502::STX()
@@ -454,12 +541,18 @@ uint8_t nes6502::STY()
 
 uint8_t nes6502::TAX()
 {
-	return uint8_t();
+	reg_x = reg_a;
+	setFlag(Z, reg_x == 0x00);
+	setFlag(N, reg_x & 0x80);
+	return 0;
 }
 
 uint8_t nes6502::TAY()
 {
-	return uint8_t();
+	reg_y = reg_a;
+	setFlag(Z, reg_y == 0x00);
+	setFlag(N, reg_y & 0x80);
+	return 0;
 }
 
 uint8_t nes6502::TSX()
@@ -474,12 +567,16 @@ uint8_t nes6502::TXA()
 
 uint8_t nes6502::TXS()
 {
-	return uint8_t();
+	sp = reg_x;
+	return 0;
 }
 
 uint8_t nes6502::TYA()
 {
-	return uint8_t();
+	reg_a = reg_y;
+	setFlag(Z, reg_a == 0x00);
+	setFlag(N, reg_a & 0x80);
+	return 0;
 }
 
 uint8_t nes6502::XXX()
