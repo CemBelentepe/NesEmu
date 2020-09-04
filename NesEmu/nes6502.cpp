@@ -64,6 +64,7 @@ void nes6502::setFlag(Flags flagName, uint8_t data)
 
 uint8_t nes6502::IMM()
 {
+	// LDA #$10 
 	addr_abs = pc++;
 	return 0;
 }
@@ -159,12 +160,32 @@ uint8_t nes6502::IZY()
 
 uint8_t nes6502::ADC()
 {
-	return uint8_t();
+	fetch();
+	uint16_t val = reg_a + fetched + getFlag(C);
+	
+	bool is_v = ((int8_t)reg_a > 0 && (int8_t)fetched > 0 && (int8_t)val < 0)
+		|| ((int8_t)reg_a < 0 && (int8_t)fetched < 0 && (int8_t)val > 0);
+
+	reg_a = val;
+
+	setFlag(C, val > 0xFF);
+	setFlag(Z, (val & 0xFF) == 0);
+	setFlag(V, is_v);
+	setFlag(N, (val & 0x80) > 0);
+	
+	return 1;
 }
 
 uint8_t nes6502::AND()
 {
-	return uint8_t();
+	fetch();
+
+	reg_a = reg_a & fetched;
+
+	setFlag(Z, reg_a == 0);
+	setFlag(N, (reg_a & 0x80) > 0);
+
+	return 1;
 }
 
 uint8_t nes6502::ASL()
@@ -179,12 +200,14 @@ uint8_t nes6502::BCC()
 
 uint8_t nes6502::BCS()
 {
-	return uint8_t();
+	branch(C, 1);
+	return 0;
 }
 
 uint8_t nes6502::BEQ()
 {
-	return uint8_t();
+	branch(Z, 1);
+	return 0;
 }
 
 uint8_t nes6502::BIT()
@@ -199,12 +222,15 @@ uint8_t nes6502::BMI()
 
 uint8_t nes6502::BNE()
 {
-	return uint8_t();
+	branch(Z, 0);
+	return 0;
 }
 
 uint8_t nes6502::BPL()
 {
-	return uint8_t();
+	branch(N, 0);
+
+	return 0;
 }
 
 uint8_t nes6502::BRK()
@@ -219,12 +245,14 @@ uint8_t nes6502::BVC()
 
 uint8_t nes6502::BVS()
 {
-	return uint8_t();
+	branch(V, 1);
+	return 0;
 }
 
 uint8_t nes6502::CLC()
 {
-	return uint8_t();
+	setFlag(C, 0);
+	return 0;
 }
 
 uint8_t nes6502::CLD()
@@ -239,12 +267,20 @@ uint8_t nes6502::CLI()
 
 uint8_t nes6502::CLV()
 {
-	return uint8_t();
+	setFlag(V, 0);
+	return 0;
 }
 
 uint8_t nes6502::CMP()
 {
-	return uint8_t();
+	fetch();
+	uint16_t val = reg_a - fetched;
+
+	setFlag(C, reg_a >= fetched);
+	setFlag(Z, reg_a == fetched);
+	setFlag(N, (val & 0x80) > 0);
+
+	return 1;
 }
 
 uint8_t nes6502::CPX()
@@ -259,7 +295,9 @@ uint8_t nes6502::CPY()
 
 uint8_t nes6502::DEC()
 {
-	return uint8_t();
+	fetch();
+	uint8_t val = fetched - 1;
+	write(addr_abs, val);
 }
 
 uint8_t nes6502::DEX()
@@ -440,4 +478,16 @@ uint8_t nes6502::TYA()
 uint8_t nes6502::XXX()
 {
 	return uint8_t();
+}
+
+void nes6502::branch(Flags flag, uint8_t condition)
+{
+	if (getFlag(flag) == condition)
+	{
+		uint32_t target = (int32_t)pc + addr_rel;
+		cycles++;
+		if ((target & 0xFF00) != (pc & 0xFF00))
+			cycles++;
+		pc = target;
+	}
 }

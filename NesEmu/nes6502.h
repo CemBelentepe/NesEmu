@@ -85,6 +85,8 @@ private:
 	uint8_t TSX();	uint8_t TXA();	uint8_t TXS();	uint8_t TYA();
 	uint8_t XXX();
 
+	void branch(Flags flag, uint8_t condition);
+
 public:
 	nes6502(std::unique_ptr<Bus> bus)
 		: bus(std::move(bus))
