@@ -165,8 +165,11 @@ uint8_t nes6502::ADC()
 	fetch();
 	uint16_t val = reg_a + fetched + getFlag(C);
 
-	bool is_v = ((int8_t)reg_a > 0 && (int8_t)fetched > 0 && (int8_t)val < 0)
-		|| ((int8_t)reg_a < 0 && (int8_t)fetched < 0 && (int8_t)val > 0);
+	bool a = !(reg_a & 0x80);
+	bool b = !(fetched & 0x80);
+	bool c = !(val & 0x80);
+
+	bool is_v = a && b && !c || !a && !b && c;
 
 	reg_a = val;
 
@@ -563,12 +566,20 @@ uint8_t nes6502::SBC()
 {
 	fetch();
 	uint16_t temp = (uint16_t)reg_a + (((uint16_t)fetched) ^ 0x00FF) + (uint16_t)getFlag(C);
+
+	bool a = !(reg_a & 0x80);
+	bool b = !(fetched & 0x80);
+	bool c = !(temp & 0x80);
+
+	uint8_t is_v = a && !b && !c || !a && b && c;
+
 	setFlag(C, temp & 0xFF00);
 	setFlag(Z, (temp & 0x00FF) == 0);
 	setFlag(N, temp & 0x0080);
-	if (((reg_a & 0x80) && !(fetched & 0x80) && !(temp & 0x80)) || (!(reg_a & 0x80) && (fetched & 0x80) && (temp & 0x80)))
-		setFlag(V, 1);
+	setFlag(V, is_v);
+
 	reg_a = temp & 0x00FF;
+	
 	return 1;
 }
 
