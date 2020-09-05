@@ -41,6 +41,45 @@ void nes6502::clock()
 	cycles--;
 }
 
+void nes6502::irq()
+{
+	if (getFlag(I))
+	{
+		write(0x0100 + sp, (pc >> 8) & 0x00FF);
+		sp--;
+		write(0x0100 + sp, pc & 0x00FF);
+		sp--;
+
+		setFlag(B, 0);
+		setFlag(U, 1);
+		setFlag(I, 1);
+		write(0x0100 + sp, status_reg);
+		sp--;
+
+		pc = (uint16_t)read(0xFFFE) | ((uint16_t)read(0xFFFF) << 8);
+
+		cycles = 7;
+	}
+}
+
+void nes6502::nmi()
+{
+	write(0x0100 + sp, (pc >> 8) & 0x00FF);
+	sp--;
+	write(0x0100 + sp, pc & 0x00FF);
+	sp--;
+
+	setFlag(B, 0);
+	setFlag(U, 1);
+	setFlag(I, 1);
+	write(0x0100 + sp, status_reg);
+	sp--;
+
+	pc = (uint16_t)read(0xFFFA) | ((uint16_t)read(0xFFFB) << 8);
+
+	cycles = 8;
+}
+
 uint8_t nes6502::read(uint16_t addr)
 {
 	return bus->read(addr);
