@@ -82,12 +82,12 @@ void nes6502::nmi()
 
 uint8_t nes6502::read(uint16_t addr)
 {
-	return bus->read(addr);
+	return bus->cpuRead(addr);
 }
 
 void nes6502::write(uint16_t addr, uint8_t data)
 {
-	bus->write(addr, data);
+	bus->cpuWrite(addr, data);
 }
 
 uint8_t nes6502::getFlag(Flags flagName)

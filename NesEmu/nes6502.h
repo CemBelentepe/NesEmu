@@ -40,7 +40,7 @@ private:
 	uint8_t	 cycles = 0;
 	uint8_t  fetched = 0;
 	uint8_t	 opcode = 0;
-	std::unique_ptr<Bus> bus;
+	Bus* bus;
 	std::vector<Instruction> instructions =
 	{
 		{"BRK", &nes6502::BRK, &nes6502::IMP, 7}, {"ORA", &nes6502::ORA, &nes6502::IZX, 6}, {"???", &nes6502::XXX, &nes6502::IMP, 8}, {"???", &nes6502::XXX, &nes6502::IMP, 8}, {"???", &nes6502::XXX, &nes6502::IMP, 8}, {"ORA", &nes6502::ORA, &nes6502::ZP0, 3}, {"ASL", &nes6502::ASL, &nes6502::ZP0, 5}, {"???", &nes6502::XXX, &nes6502::IMP, 8}, {"PHP", &nes6502::PHP, &nes6502::IMP, 3}, {"ORA", &nes6502::ORA, &nes6502::IMM, 2}, {"ASL", &nes6502::ASL, &nes6502::ACC, 2}, {"???", &nes6502::XXX, &nes6502::IMP, 8}, {"???", &nes6502::XXX, &nes6502::IMP, 8}, {"ORA", &nes6502::ORA, &nes6502::ABS, 4}, {"ASL", &nes6502::ASL, &nes6502::ABS, 6}, {"???", &nes6502::XXX, &nes6502::IMP, 8},
@@ -88,8 +88,8 @@ private:
 	void branch(Flags flag, uint8_t condition);
 
 public:
-	nes6502(std::unique_ptr<Bus> bus)
-		: bus(std::move(bus))
+	nes6502(Bus* bus)
+		: bus(bus)
 	{}
 
 	uint8_t fetch();
