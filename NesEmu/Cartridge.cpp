@@ -21,7 +21,7 @@ Cartridge::Cartridge(std::string filePath)
 		uint8_t padding[5];
 	} header;
 
-	std::ifstream file(filePath);
+	std::ifstream file(filePath, std::ifstream::binary);
 	if (file.fail())
 	{
 		m_imageValid = false;
@@ -41,7 +41,7 @@ Cartridge::Cartridge(std::string filePath)
 	file.read((char*)memPRG.data(), memPRG.size());
 
 	this->nCHRBank = header.nCHRRom;
-	this->memPRG.resize(nCHRBank * 8192);
+	this->memCHR.resize(nCHRBank * 8192);
 	file.read((char*)memCHR.data(), memCHR.size());
 
 	switch (this->mapperID)
@@ -51,7 +51,7 @@ Cartridge::Cartridge(std::string filePath)
 		break;
 	default:
 		this->mapper = nullptr;
-		std::cout << "[ERROR] Mapper_" << mapperID << " is not added to the emulator." << std::endl;
+		std::cout << "[ERROR] Mapper_" << (int)mapperID << " is not added to the emulator." << std::endl;
 		break;
 	}
 

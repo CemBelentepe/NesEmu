@@ -8,6 +8,9 @@ class Mapper;
 
 class Cartridge
 {
+public:
+	std::vector<uint8_t> memPRG;
+	std::vector<uint8_t> memCHR;
 private:
 	std::shared_ptr<Mapper> mapper;
 
@@ -15,8 +18,6 @@ private:
 	uint8_t nPRGBank = 0;
 	uint8_t nCHRBank = 0;
 
-	std::vector<uint8_t> memPRG;
-	std::vector<uint8_t> memCHR;
 
 	bool m_imageValid = false;
 

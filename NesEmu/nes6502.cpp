@@ -1,6 +1,8 @@
 #include "nes6502.h"
 #include "Bus.h"
 
+#include <sstream>
+
 uint8_t nes6502::fetch()
 {
 	if (instructions[opcode].addrmode != &nes6502::IMP)
@@ -80,12 +82,12 @@ void nes6502::nmi()
 	cycles = 8;
 }
 
-uint8_t nes6502::read(uint16_t addr)
+uint8_t nes6502::read(uint16_t addr) const
 {
 	return bus->cpuRead(addr);
 }
 
-void nes6502::write(uint16_t addr, uint8_t data)
+void nes6502::write(uint16_t addr, uint8_t data) const
 {
 	bus->cpuWrite(addr, data);
 }
@@ -103,9 +105,101 @@ void nes6502::setFlag(Flags flagName, uint8_t data)
 		status_reg &= ~flagName;
 }
 
+std::map<uint16_t, std::string> nes6502::dissamble(uint16_t start, uint16_t end) const
+{
+	auto byteToHex = [](uint8_t num) -> std::string {
+		std::string str = "00";
+		for (int i = 0; i < 2; i++)
+		{
+			str[1 - i] = "0123456789ABCDEF"[num % 16];
+			num /= 16;
+		}
+		return str;
+	};
+
+	auto wordToHex = [&](uint16_t num) -> std::string {
+		return byteToHex((num & 0xFF00) >> 8) + byteToHex(num & 0x00FF);
+	};
+
+	uint16_t pos = start;
+
+	auto next = [&]() -> std::string {
+		return byteToHex(read(pos++));
+	};
+
+	std::map<uint16_t, std::string> dump;
+
+	while (pos < end - 1)
+	{
+		std::stringstream ss;
+		uint16_t p = pos;
+		ss << "0x" << wordToHex(pos) << ": ";
+
+		uint8_t opcode = read(pos++);
+		Instruction inst = instructions[opcode];
+
+		ss << inst.name << "[" << byteToHex(opcode) << "] ";
+
+		if (inst.addrmode == &nes6502::IMM)
+		{
+			ss << "#$" << next();
+		}
+		else if (inst.addrmode == &nes6502::IMP)
+		{
+		}
+		else if (inst.addrmode == &nes6502::ZP0)
+		{
+			ss << "*" << next();
+		}
+		else if (inst.addrmode == &nes6502::ZPX)
+		{
+			ss << "*" << next() << ", X";
+		}
+		else if (inst.addrmode == &nes6502::ZPY)
+		{
+			ss << "*" << next() << ", Y";
+		}
+		else if (inst.addrmode == &nes6502::ABS)
+		{
+			ss << next() << next();
+		}
+		else if (inst.addrmode == &nes6502::ABX)
+		{
+			ss << next() << next() << ", X";
+		}
+		else if (inst.addrmode == &nes6502::ABY)
+		{
+			ss << next() << next() << ", Y";
+		}
+		else if (inst.addrmode == &nes6502::ACC)
+		{
+			ss << "A";
+		}
+		else if (inst.addrmode == &nes6502::REL)
+		{
+			ss << next();
+		}
+		else if (inst.addrmode == &nes6502::IND)
+		{
+			ss << "(" << next() << next() << ")";
+		}
+		else if (inst.addrmode == &nes6502::IZX)
+		{
+			ss << "(" << next() << ", X)";
+		}
+		else if (inst.addrmode == &nes6502::IZY)
+		{
+			ss << "(" << next() << "), Y";
+		}
+
+		dump.insert({ p, ss.str() });
+	}
+
+	return dump;
+}
+
 uint8_t nes6502::IMM()
 {
-	// LDA #$10 
 	addr_abs = pc++;
 	return 0;
 }
@@ -137,7 +231,7 @@ uint8_t nes6502::ABS()
 {
 	uint16_t lo = read(pc++);
 	uint16_t hi = read(pc++);
-	addr_abs = hi << 8 | lo;
+	addr_abs = (hi << 8) | lo;
 	return 0;
 }
 
@@ -300,7 +394,7 @@ uint8_t nes6502::BRK()
 	sp--;
 	write(0x0100 + sp, pc & 0x00FF);
 	sp--;
-	
+
 	setFlag(B, 1);
 	write(0x0100 + sp, status_reg);
 	sp--;
@@ -312,7 +406,7 @@ uint8_t nes6502::BRK()
 }
 
 uint8_t nes6502::BVC()
-{	
+{
 	branch(V, 0);
 	return 0;
 }
@@ -336,7 +430,7 @@ uint8_t nes6502::CLD()
 }
 
 uint8_t nes6502::CLI()
-{	
+{
 	setFlag(I, 0);
 	return 0;
 }
@@ -593,9 +687,9 @@ uint8_t nes6502::RTI()
 uint8_t nes6502::RTS()
 {
 	sp++;
-	pc = (uint16_t) read(0x0100 + sp);
+	pc = (uint16_t)read(0x0100 + sp);
 	sp++;
-	pc = (uint16_t) read(0x0100 + sp) << 8;
+	pc = (uint16_t)read(0x0100 + sp) << 8;
 	pc++;
 
 	return 0;
@@ -618,7 +712,7 @@ uint8_t nes6502::SBC()
 	setFlag(V, is_v);
 
 	reg_a = temp & 0x00FF;
-	
+
 	return 1;
 }
 

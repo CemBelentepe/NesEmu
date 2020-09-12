@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <map>
 
 class Bus;
 
@@ -29,15 +30,18 @@ private:
 		uint8_t cycle = 0;
 	};
 
+public:
 	uint8_t  reg_a = 0;
 	uint8_t  reg_x = 0;
 	uint8_t  reg_y = 0;
 	uint8_t  sp = 0;
 	uint16_t pc = 0;
 	uint8_t	 status_reg = 0;
+	uint8_t	 cycles = 0;
+
+private:
 	uint16_t addr_abs = 0;
 	int8_t   addr_rel = 0;
-	uint8_t	 cycles = 0;
 	uint8_t  fetched = 0;
 	uint8_t	 opcode = 0;
 	Bus* bus;
@@ -62,7 +66,7 @@ private:
 	};
 
 	uint8_t IMM();	uint8_t IMP();
-	uint8_t ZP0();	uint8_t ZPX();	
+	uint8_t ZP0();	uint8_t ZPX();
 	uint8_t ZPY();	uint8_t ABS();
 	uint8_t ABX();	uint8_t ABY();
 	uint8_t ACC();	uint8_t REL();
@@ -99,10 +103,12 @@ public:
 	void irq();
 	void nmi();
 
-	uint8_t read(uint16_t addr);
-	void write(uint16_t addr, uint8_t data);
+	uint8_t read(uint16_t addr) const;
+	void write(uint16_t addr, uint8_t data) const;
 
 	uint8_t getFlag(Flags flagName);
 	void setFlag(Flags flagName, uint8_t data);
+	
+	std::map<uint16_t, std::string> dissamble(uint16_t start, uint16_t end) const;
 };
 

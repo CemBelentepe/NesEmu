@@ -9,9 +9,11 @@
 
 class Bus
 {
-private:
+public:
 	nes6502 cpu;
 	nes2c02 ppu;
+
+private:
 	std::array<uint8_t, 2048> cpuRam;
 	std::shared_ptr<Cartridge> cartridge;
 	size_t systemClockCounter = 0;
