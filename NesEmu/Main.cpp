@@ -1,82 +1,49 @@
 #include <memory>
 #include <iostream>
+#include <iomanip>
 #include <cstdlib>
 #include <fstream>
 
+#include <SFML/Graphics.hpp>
+
+#include "Common.h"
 #include "Cartridge.h"
 #include "Bus.h"
 
+#include "NesScreen.h"
 
 int main()
 {
-	auto byteToHex = [](uint8_t num) -> std::string {
-		std::string str = "00";
-		for (int i = 0; i < 2; i++)
-		{
-			str[1 - i] = "0123456789ABCDEF"[num % 16];
-			num /= 16;
-		}
-		return str;
-	};
-
-	auto wordToHex = [&](uint16_t num) -> std::string {
-		return byteToHex((num & 0xFF00) >> 8) + byteToHex(num & 0x00FF);
-	};
-
-
-	auto cart = std::make_shared<Cartridge>("..\\tests\\nestest.nes");
-	if (!cart->imageValid())
-		return 1;
-	Bus nes;
-	nes.insertCartridge(cart);
-
-	std::map<uint16_t, std::string> ram = nes.cpu.dissamble(0x0000, 0xFFFF);
-
-	nes.reset();
-#if 0
-	std::ofstream file("out.txt");
-	auto it = ram.find(0x0000);
-
-	while(it != ram.end())
+#if 1
+	NesScreen nes("..\\tests\\nestest.nes");
+	nes.init();
+	nes.printImage("out.txt");
+	bool run = true;
+	while (run)
 	{
-		uint8_t data = nes.cpuRead(it->first);
-		if (data == 0)
-		{
-			file << "0x" << wordToHex(it->first) << ": [0x00]\n";
-			while (data == 0)
-			{
-				data = nes.cpuRead(it->first);
-				it++;
-			}
-		}
-		else if (data == 0xFF)
-		{
-			file << "0x" << wordToHex(it->first) << ": [0xFF]\n";
-			while (data == 0xFF)
-			{
-				data = nes.cpuRead(it->first);
-				it++;
-			}
-		}
-		else
-			file << it->second << "\n";
-		it++;
+		run = nes.update();
 	}
-
-	file.close();
 #endif
 
+#if 0
+	Bus nes;
+	auto cart = std::make_shared<Cartridge>("..\\tests\\nestest.nes");
+	nes.insertCartridge(cart);
+	nes.reset();
+	auto ram = nes.cpu.dissamble(0x0000, 0xFFFF);
 	while (true)
 	{
-		nes.cpu.clock();
+		uint16_t pc_prev = nes.cpu.pc;
+		while(pc_prev == nes.cpu.pc)
+			nes.cpu.clock();
 
 		std::cout << std::hex << "A:" << int(nes.cpu.reg_a) << " X:" << int(nes.cpu.reg_x) << " Y:" << int(nes.cpu.reg_y) << "\n" <<
 			"PC:" << int(nes.cpu.pc) << " SP: " << int(nes.cpu.sp) << "\n" <<
 			"Cycle:" << int(nes.cpu.cycles) << "\n";
 		uint8_t p = nes.cpu.status_reg;
-		std::string c = "NVUBDIZC";
+		std::string c = "N V U B D I Z C";
 
-		for(int i = 0; i < 8; i++)
+		for(int i = 0; i < 16; i+=2)
 		{
 			if (!(p & 0b1000'0000))
 				c[i] = tolower(c[i]);
@@ -85,16 +52,19 @@ int main()
 		std::cout << c << "\n\n";
 
 		auto it = ram.find(nes.cpu.pc);
+		for (int i = 0; i < 7 && it != ram.begin(); i++)
+			it--;
 
-		for (int i = 0; i < 8; i++)
+		for (int i = 0; i < 16; i++)
 		{
-			std::cout << it->second << "\n";
+			std::cout << (it->first == nes.cpu.pc ? "->" : "  ") << it->second << "\n";
 			it++;
 		}
 
 		std::cin.get();
 		system("cls");
 	}
+#endif
 
 	return 0;
 }

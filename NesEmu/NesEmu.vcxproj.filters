@@ -33,6 +33,12 @@
     <ClCompile Include="Mapper_000.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="NesScreen.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Common.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="nes6502.h">
@@ -51,6 +57,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Mapper_000.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NesScreen.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

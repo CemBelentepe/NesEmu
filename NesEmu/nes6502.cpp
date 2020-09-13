@@ -1,5 +1,6 @@
 #include "nes6502.h"
 #include "Bus.h"
+#include "Common.h"
 
 #include <sstream>
 
@@ -107,24 +108,10 @@ void nes6502::setFlag(Flags flagName, uint8_t data)
 
 std::map<uint16_t, std::string> nes6502::dissamble(uint16_t start, uint16_t end) const
 {
-	auto byteToHex = [](uint8_t num) -> std::string {
-		std::string str = "00";
-		for (int i = 0; i < 2; i++)
-		{
-			str[1 - i] = "0123456789ABCDEF"[num % 16];
-			num /= 16;
-		}
-		return str;
-	};
-
-	auto wordToHex = [&](uint16_t num) -> std::string {
-		return byteToHex((num & 0xFF00) >> 8) + byteToHex(num & 0x00FF);
-	};
-
 	uint16_t pos = start;
 
 	auto next = [&]() -> std::string {
-		return byteToHex(read(pos++));
+		return hex(read(pos++));
 	};
 
 	std::map<uint16_t, std::string> dump;
@@ -133,12 +120,12 @@ std::map<uint16_t, std::string> nes6502::dissamble(uint16_t start, uint16_t end)
 	{
 		std::stringstream ss;
 		uint16_t p = pos;
-		ss << "0x" << wordToHex(pos) << ": ";
+		ss << "0x" << hex(pos) << ": ";
 
 		uint8_t opcode = read(pos++);
 		Instruction inst = instructions[opcode];
 
-		ss << inst.name << "[" << byteToHex(opcode) << "] ";
+		ss << inst.name << "[" << hex(opcode) << "] ";
 
 		if (inst.addrmode == &nes6502::IMM)
 		{

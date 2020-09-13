@@ -165,18 +165,22 @@
   <ItemGroup>
     <ClCompile Include="Bus.cpp" />
     <ClCompile Include="Cartridge.cpp" />
+    <ClCompile Include="Common.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Mapper_000.cpp" />
     <ClCompile Include="nes2c02.cpp" />
     <ClCompile Include="nes6502.cpp" />
+    <ClCompile Include="NesScreen.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Bus.h" />
     <ClInclude Include="Cartridge.h" />
+    <ClInclude Include="Common.h" />
     <ClInclude Include="Mapper.h" />
     <ClInclude Include="Mapper_000.h" />
     <ClInclude Include="nes2c02.h" />
     <ClInclude Include="nes6502.h" />
+    <ClInclude Include="NesScreen.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
