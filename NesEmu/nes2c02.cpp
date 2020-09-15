@@ -93,7 +93,7 @@ uint8_t nes2c02::ppuRead(uint16_t addr)
 		if (addr == 0x0014) addr = 0x0004;
 		if (addr == 0x0018) addr = 0x0008;
 		if (addr == 0x001C) addr = 0x000C;
-		temp = paletteTable[addr];
+		temp = paletteTable[addr] & (mask_reg.greyscale ? 0x30 : 0x3F);
 	}
 
 	return temp;
