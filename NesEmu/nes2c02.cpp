@@ -7,12 +7,107 @@ void nes2c02::insertCartridge(std::shared_ptr<Cartridge> cartridge)
 }
 
 void nes2c02::cpuWrite(uint16_t addr, uint8_t data)
-{}
+{
+	switch (addr)
+	{
+
+	case 0x0000:
+		control_reg.reg = data;
+		tram_addr.x_nametable = control_reg.x_nametable;
+		tram_addr.y_nametable = control_reg.y_nametable;
+		break;
+	case 0x0001:
+		mask_reg.reg = data;
+		break;
+	case 0x0002:
+		//can't write into status reg
+		break;
+	case 0x0003:
+		break;
+	case 0x0004:
+		break;
+	case 0x0005:
+		if (addr_latch == 0)
+		{
+			fine_x = data & 0x07;
+			tram_addr.x_coarse = data >> 3;
+			addr_latch = 1;
+		}
+		else
+		{
+			tram_addr.fine_y = data & 0x07;
+			tram_addr.y_coarse = data >> 3;
+			addr_latch = 0;
+		}
+		break;
+	case 0x0006:
+		//accumulate data in tram then write to vram
+		if (addr_latch == 0)
+		{
+			//read high first, low second
+			tram_addr.reg = (uint16_t)((data & 0x3F) << 8) | (tram_addr.reg & 0x00FF);
+			addr_latch = 1;
+		}
+		else
+		{
+			tram_addr.reg = (uint16_t) data | (tram_addr.reg & 0xFF00);
+			vram_addr = tram_addr;
+			addr_latch = 0;
+		}
+		break;
+	case 0x0007:
+		ppuWrite(vram_addr.reg, data);
+
+		//check inc mode and inc vram
+		vram_addr.reg += (control_reg.inc_mode ? 32 : 1);
+		break;
+	}
+
+}
 
 uint8_t nes2c02::cpuRead(uint16_t addr)
 {
+	uint8_t data = 0x00;
 
-	return 0;
+	switch (addr)
+	{
+	
+	case 0x0000:
+		//ctrl can't be read
+		break;
+	case 0x0001:
+		//mask can't be read
+		break;
+	case 0x0002:
+		data = (status_reg.reg & 0xE0) | (ppu_data_buffer & 0x1F);
+		status_reg.vblank = 0;
+		addr_latch = 0;
+		break;
+
+	case 0x0003:
+		break;
+	case 0x0004:
+		break;
+	case 0x0005:
+		//scroll can't be read
+		break;
+	case 0x0006:
+		//ppu addr can't be read
+		break;
+	case 0x0007:
+
+		data = ppu_data_buffer;
+		ppu_data_buffer = ppuRead(vram_addr.reg);
+
+		//no need to delay if reading from palette range
+		if (vram_addr.reg >= 0x3F00) data = ppu_data_buffer;
+
+		//check inc mode and inc vram
+		vram_addr.reg += (control_reg.inc_mode ? 32 : 1);
+		break;
+	}
+	
+	return data;
 }
 
 void nes2c02::ppuWrite(uint16_t addr, uint8_t data)
@@ -101,3 +196,15 @@ uint8_t nes2c02::ppuRead(uint16_t addr)
 
 void nes2c02::clock()
 {}
+
+void nes2c02::reset()
+{
+	fine_x = 0x00;
+	addr_latch = 0x00;
+	ppu_data_buffer = 0x00;
+	status_reg.reg = 0x00;
+	mask_reg.reg = 0x00;
+	control_reg.reg = 0x00;
+	vram_addr.reg = 0x0000;
+	tram_addr.reg = 0x0000;
+}

@@ -63,6 +63,29 @@ private:
 		uint8_t reg;
 	} control_reg;
 
+	union LOOPYREG
+	{
+		struct
+		{
+			uint16_t x_coarse : 5;
+			uint16_t y_coarse : 5;
+			uint16_t x_nametable : 1;
+			uint16_t y_nametable : 1;
+			uint16_t fine_y : 3;
+			uint16_t unused : 1;
+		};
+
+		uint16_t reg = 0x0000;
+	};
+
+	LOOPYREG vram_addr;
+	LOOPYREG tram_addr;
+
+	uint8_t fine_x = 0x00;
+
+	uint8_t addr_latch = 0x00;
+	uint8_t ppu_data_buffer = 0x00;
+
 public:
 	void insertCartridge(std::shared_ptr<Cartridge> cartridge);
 
@@ -75,5 +98,6 @@ public:
 	uint8_t ppuRead(uint16_t addr);
 
 	void clock();
+	void reset();
 };
 
