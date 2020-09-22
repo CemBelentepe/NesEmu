@@ -195,7 +195,38 @@ uint8_t nes2c02::ppuRead(uint16_t addr)
 }
 
 void nes2c02::clock()
-{}
+{
+	if (scanline >= -1 && scanline < 240)
+	{
+		if (scanline == 0 && cycle == 0)  cycle = 1;
+		if (scanline == -1 && cycle == 1) status_reg.vblank = 0;
+
+		//http://wiki.nesdev.com/w/index.php/PPU_scrolling
+		//http://wiki.nesdev.com/w/index.php/PPU_rendering
+		if ((cycle >= 2 && cycle < 258) || (cycle >= 321 && cycle < 338))
+		{
+			switch ((cycle - 1) % 8)
+			{
+			case 0:
+				bg_next_id = ppuRead(0x2000 | (vram_addr.reg & 0x0FFF));
+				break;
+			case 2:
+			case 4:
+			case 6:
+			case 7:
+			}
+		}
+	}
+
+
+
+	if (scanline == 241 && cycle == 1)
+	{
+		status_reg.vblank = 1;
+		if (control_reg.generate_nmi) nmi = true;
+	}
+
+}
 
 void nes2c02::reset()
 {

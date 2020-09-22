@@ -86,6 +86,14 @@ private:
 	uint8_t addr_latch = 0x00;
 	uint8_t ppu_data_buffer = 0x00;
 
+	int16_t scanline = 0;
+	int16_t cycle = 0;
+
+	uint8_t bg_next_id = 0x00;
+	uint8_t bg_next_attrib = 0x00;
+	uint8_t bg_next_pattern_low = 0x00;
+	uint8_t bg_next_pattern_high = 0x00;
+
 public:
 	void insertCartridge(std::shared_ptr<Cartridge> cartridge);
 
@@ -99,5 +107,7 @@ public:
 
 	void clock();
 	void reset();
+
+	bool nmi = false;
 };
 
