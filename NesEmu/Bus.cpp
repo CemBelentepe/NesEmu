@@ -42,5 +42,10 @@ void Bus::clock()
 	ppu.clock();
 	if (systemClockCounter % 3)
 		cpu.clock();
+	if (ppu.nmi)
+	{
+		ppu.nmi = false;
+		cpu.nmi();
+	}
 	systemClockCounter++;
 }

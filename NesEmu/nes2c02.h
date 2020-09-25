@@ -94,6 +94,11 @@ private:
 	uint8_t bg_next_pattern_low = 0x00;
 	uint8_t bg_next_pattern_high = 0x00;
 
+	uint8_t bg_shifter_pattern_low = 0x00;
+	uint8_t bg_shifter_pattern_high = 0x00;
+	uint8_t bg_shifter_attrib_low = 0x00;
+	uint8_t bg_shifter_attrib_high = 0x00;
+
 public:
 	void insertCartridge(std::shared_ptr<Cartridge> cartridge);
 
@@ -109,5 +114,6 @@ public:
 	void reset();
 
 	bool nmi = false;
+	bool frame_complete = false;
 };
 

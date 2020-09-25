@@ -196,36 +196,178 @@ uint8_t nes2c02::ppuRead(uint16_t addr)
 
 void nes2c02::clock()
 {
+	//Lambda functions to simplify the implementation
+	uint8_t rendering = mask_reg.bg_show || mask_reg.sprite_show;
+
+	auto IncScrollX = [&]()
+	{
+		if (rendering)
+		{
+			if (vram_addr.x_coarse == 31)
+			{
+				vram_addr.x_coarse = 0;
+				vram_addr.x_nametable = ~vram_addr.x_nametable;
+			}
+			else
+			{
+				vram_addr.x_coarse++;
+			}
+		}
+	};
+
+	auto IncScrollY = [&]()
+	{
+		if (rendering)
+		{
+			if (vram_addr.fine_y < 7)
+			{
+				vram_addr.fine_y++;
+			}
+			else
+			{
+				vram_addr.fine_y = 0;
+				if (vram_addr.y_coarse == 29)
+				{
+					vram_addr.y_coarse = 0;
+					vram_addr.y_nametable = ~vram_addr.y_nametable;
+				}
+				else if (vram_addr.y_coarse == 31)
+				{
+					vram_addr.y_coarse = 0;
+				}
+				else
+				{
+					vram_addr.y_coarse++;
+				}
+			}
+		}
+	};
+
+	auto ResetToTempAddressX = [&]()
+	{
+		if (rendering)
+		{
+			vram_addr.x_coarse = tram_addr.x_coarse;
+			vram_addr.x_nametable = tram_addr.x_nametable;
+		}
+	};
+
+	auto ResetToTempAddressY = [&]()
+	{
+		if (rendering)
+		{
+			vram_addr.y_coarse = tram_addr.y_coarse;
+			vram_addr.y_nametable = tram_addr.y_nametable;
+			vram_addr.fine_y = tram_addr.fine_y;
+		}
+	};
+
+	auto LoadBGShifters = [&]()
+	{
+		//read the next byte to low byte
+		bg_shifter_pattern_low = (bg_shifter_pattern_low & 0xFF00) | bg_next_pattern_low;
+		bg_shifter_pattern_high = (bg_shifter_pattern_high & 0xFF00) | bg_next_pattern_high;
+
+		//check if low and high is set
+		bg_shifter_attrib_low = (bg_shifter_attrib_low & 0xFF00) | ((bg_next_attrib & 0b01) ? 0xFF : 0x00);
+		bg_shifter_attrib_high = (bg_shifter_attrib_high & 0xFF00) | ((bg_next_attrib & 0b10) ? 0xFF : 0x00);
+	};
+
+	auto UpdateBGShifters = [&]()
+	{
+		if (mask_reg.bg_show)
+		{
+			bg_shifter_attrib_high <<= 1;
+			bg_shifter_attrib_low <<= 1;
+			bg_shifter_attrib_high <<= 1;
+			bg_shifter_attrib_low <<= 1;
+		}
+	};
+
 	if (scanline >= -1 && scanline < 240)
 	{
 		if (scanline == 0 && cycle == 0)  cycle = 1;
 		if (scanline == -1 && cycle == 1) status_reg.vblank = 0;
 
-		//http://wiki.nesdev.com/w/index.php/PPU_scrolling
-		//http://wiki.nesdev.com/w/index.php/PPU_rendering
 		if ((cycle >= 2 && cycle < 258) || (cycle >= 321 && cycle < 338))
 		{
+			UpdateBGShifters();
 			switch ((cycle - 1) % 8)
 			{
 			case 0:
+				LoadBGShifters();
 				bg_next_id = ppuRead(0x2000 | (vram_addr.reg & 0x0FFF));
 				break;
 			case 2:
+				bg_next_attrib = ppuRead(0x23C0 | (vram_addr.y_nametable << 11)
+					| (vram_addr.x_nametable << 10)
+					| ((vram_addr.y_coarse >> 2) << 3)
+					| (vram_addr.x_coarse >> 2));
+				if (vram_addr.y_coarse & 0x02) bg_next_attrib >>= 4;
+				if (vram_addr.x_coarse & 0x02) bg_next_attrib >>= 2;
+				bg_next_attrib &= 0x03;
+				break;
 			case 4:
+				bg_next_pattern_low = ppuRead((control_reg.bg_patterntable << 12) + ((uint16_t)bg_next_id << 4) + (vram_addr.fine_y));
+				break;
 			case 6:
+				bg_next_pattern_high = ppuRead((control_reg.bg_patterntable << 12) + ((uint16_t)bg_next_id << 4) + (vram_addr.fine_y) + 8);
+				break;
 			case 7:
+				IncScrollX();
+				break;
 			}
 		}
 	}
 
+	if (cycle == 256) IncScrollY();
 
+	if (cycle == 257) ResetToTempAddressX();
 
-	if (scanline == 241 && cycle == 1)
+	if (cycle == 338 || cycle == 340) bg_next_id = ppuRead(0x2000 | (vram_addr.reg & 0x0FFF));
+
+	if (scanline == -1 && cycle >= 280 && cycle < 305) ResetToTempAddressY();
+
+	if (scanline == 240);
+
+	if (scanline >= 241 && scanline < 261)
 	{
-		status_reg.vblank = 1;
-		if (control_reg.generate_nmi) nmi = true;
+		if (scanline == 241 && cycle == 1)
+		{
+			status_reg.vblank = 1;
+			if (control_reg.generate_nmi) nmi = true;
+		}
 	}
 
+	uint8_t bg_pixel = 0x00;
+	uint8_t bg_palette = 0x00;
+
+	if (mask_reg.bg_show)
+	{
+		uint16_t shift_select_bit = 0x8000 >> fine_x;
+
+		uint8_t low_pixel = (bg_shifter_pattern_low & shift_select_bit) > 0;
+		uint8_t high_pixel = (bg_shifter_pattern_high & shift_select_bit) > 0;
+		bg_pixel = (high_pixel << 1) | low_pixel;
+		
+		uint8_t bg_low_pal = (bg_shifter_attrib_low & shift_select_bit) > 0;
+		uint8_t bg_high_pal = (bg_shifter_attrib_high & shift_select_bit) > 0;
+		bg_palette = (bg_high_pal << 1) | bg_low_pal;
+	}
+
+	//Draw to buffer pixel by pixel x:(cycle -1), y:scanline;
+
+	cycle++;
+	if (cycle >= 341)
+	{
+		cycle = 0;
+		scanline++;
+		if (scanline >= 261)
+		{
+			scanline = -1;
+			frame_complete = true;
+		}
+	}
 }
 
 void nes2c02::reset()
