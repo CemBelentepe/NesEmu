@@ -1,6 +1,54 @@
 #include "nes2c02.h"
 #include "Cartridge.h"
 
+
+nes2c02::nes2c02()
+{
+	fine_x = 0x00;
+	addr_latch = 0x00;
+	ppu_data_buffer = 0x00;
+	status_reg.reg = 0x00;
+	mask_reg.reg = 0x00;
+	control_reg.reg = 0x00;
+	vram_addr.reg = 0x0000;
+	tram_addr.reg = 0x0000;
+	scanline = 0;
+	cycle = 0;
+	bg_next_attrib = 0;
+	bg_next_id = 0;
+	bg_next_pattern_high = 0;
+	bg_next_pattern_low = 0;
+	bg_shifter_attrib_high = 0x0000;
+	bg_shifter_attrib_low = 0x0000;
+	bg_shifter_pattern_high = 0x0000;
+	bg_shifter_pattern_low = 0x0000;
+
+	for (int i = 0; i < 2; i++)
+	{
+		for (int j = 0; j < 1024; j++)
+		{
+			nameTable[i][j] = 0;
+		}
+	}
+
+	for (int i = 0; i < 2; i++)
+	{
+		for (int j = 0; j < 4096; j++)
+		{
+			patternTable[i][j] = 0;
+		}
+	}
+
+	for (int i = 0; i < 32; i++)
+	{
+		paletteTable[i] = 0;
+	}
+
+	//fill the buffer with some color to determine its size
+	screenBuffer.create(256, 240, { 0,0,0,0 });
+
+}
+
 void nes2c02::insertCartridge(std::shared_ptr<Cartridge> cartridge)
 {
 	this->cartridge = cartridge;
@@ -194,6 +242,19 @@ uint8_t nes2c02::ppuRead(uint16_t addr)
 	return temp;
 }
 
+//selects the right color from the palette and constructs a sf::color object
+sf::Color& nes2c02::getColorFromPalette(uint8_t palette, uint8_t pixel)
+{
+	uint8_t* selected_color = ppuPalette[ppuRead(0x3F00 + (palette << 2) + pixel) & 0x3F];
+	sf::Color color_obj(selected_color[0], selected_color[1], selected_color[2], selected_color[3]);
+	return color_obj;
+}
+
+sf::Image& nes2c02::getScreenBuffer()
+{
+	return screenBuffer;
+}
+
 void nes2c02::clock()
 {
 	//Lambda functions to simplify the implementation
@@ -328,7 +389,7 @@ void nes2c02::clock()
 
 	if (scanline == -1 && cycle >= 280 && cycle < 305) ResetToTempAddressY();
 
-	if (scanline == 240);
+	if (scanline == 240) {};
 
 	if (scanline >= 241 && scanline < 261)
 	{
@@ -356,6 +417,7 @@ void nes2c02::clock()
 	}
 
 	//Draw to buffer pixel by pixel x:(cycle -1), y:scanline;
+	screenBuffer.setPixel(cycle - 1, scanline, getColorFromPalette(bg_palette, bg_pixel));
 
 	cycle++;
 	if (cycle >= 341)
@@ -380,4 +442,14 @@ void nes2c02::reset()
 	control_reg.reg = 0x00;
 	vram_addr.reg = 0x0000;
 	tram_addr.reg = 0x0000;
+	scanline = 0;
+	cycle = 0;
+	bg_next_attrib = 0;
+	bg_next_id = 0;
+	bg_next_pattern_high = 0;
+	bg_next_pattern_low = 0;
+	bg_shifter_attrib_high = 0x0000;
+	bg_shifter_attrib_low = 0x0000;
+	bg_shifter_pattern_high = 0x0000;
+	bg_shifter_pattern_low = 0x0000;
 }
