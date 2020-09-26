@@ -98,7 +98,7 @@ void nes2c02::cpuWrite(uint16_t addr, uint8_t data)
 		}
 		else
 		{
-			tram_addr.reg = (uint16_t) data | (tram_addr.reg & 0xFF00);
+			tram_addr.reg = (uint16_t)data | (tram_addr.reg & 0xFF00);
 			vram_addr = tram_addr;
 			addr_latch = 0;
 		}
@@ -119,7 +119,7 @@ uint8_t nes2c02::cpuRead(uint16_t addr)
 
 	switch (addr)
 	{
-	
+
 	case 0x0000:
 		//ctrl can't be read
 		break;
@@ -154,7 +154,7 @@ uint8_t nes2c02::cpuRead(uint16_t addr)
 		vram_addr.reg += (control_reg.inc_mode ? 32 : 1);
 		break;
 	}
-	
+
 	return data;
 }
 
@@ -162,7 +162,7 @@ void nes2c02::ppuWrite(uint16_t addr, uint8_t data)
 {
 	addr &= 0x3FFF;
 
-	if(cartridge->ppuWrite(addr, data)){}
+	if (cartridge->ppuWrite(addr, data)) {}
 	else if (addr >= 0x0000 && 0x1FFF)
 	{
 		patternTable[(addr & 0x1000) >> 12][addr & 0x0FFF] = data;
@@ -201,7 +201,7 @@ uint8_t nes2c02::ppuRead(uint16_t addr)
 {
 	uint8_t temp = 0x00;
 	addr &= 0x3FFF;
-	
+
 	if (cartridge->ppuRead(addr, temp)) {}
 	else if (addr >= 0x0000 && addr <= 0x1FFF)
 	{
@@ -361,9 +361,9 @@ void nes2c02::clock()
 				break;
 			case 2:
 				bg_next_attrib = ppuRead(0x23C0 | (vram_addr.y_nametable << 11)
-					| (vram_addr.x_nametable << 10)
-					| ((vram_addr.y_coarse >> 2) << 3)
-					| (vram_addr.x_coarse >> 2));
+										 | (vram_addr.x_nametable << 10)
+										 | ((vram_addr.y_coarse >> 2) << 3)
+										 | (vram_addr.x_coarse >> 2));
 				if (vram_addr.y_coarse & 0x02) bg_next_attrib >>= 4;
 				if (vram_addr.x_coarse & 0x02) bg_next_attrib >>= 2;
 				bg_next_attrib &= 0x03;
@@ -410,7 +410,7 @@ void nes2c02::clock()
 		uint8_t low_pixel = (bg_shifter_pattern_low & shift_select_bit) > 0;
 		uint8_t high_pixel = (bg_shifter_pattern_high & shift_select_bit) > 0;
 		bg_pixel = (high_pixel << 1) | low_pixel;
-		
+
 		uint8_t bg_low_pal = (bg_shifter_attrib_low & shift_select_bit) > 0;
 		uint8_t bg_high_pal = (bg_shifter_attrib_high & shift_select_bit) > 0;
 		bg_palette = (bg_high_pal << 1) | bg_low_pal;

@@ -30,10 +30,12 @@ void NesScreen::renderRegisters()
 
 void NesScreen::renderScreen()
 {
-	sf::RectangleShape rect({ 640, 600 });
-	rect.setFillColor(sf::Color::Blue);
-	rect.setPosition(0, 0);
-	window.draw(rect);
+	sf::Image& buffer = bus.ppu.getScreenBuffer();
+	sf::Texture texture;
+	texture.loadFromImage(buffer);
+	sf::Sprite screen(texture);
+	screen.setScale(2, 2);
+	window.draw(screen);
 }
 
 void NesScreen::renderCode()
@@ -85,7 +87,7 @@ bool NesScreen::update()
 			{
 				uint16_t pc_prev = bus.cpu.pc;
 				while (pc_prev == bus.cpu.pc)
-					bus.cpu.clock();
+					bus.clock();
 			}
 			else if (event.key.code == sf::Keyboard::R)
 			{
@@ -95,10 +97,14 @@ bool NesScreen::update()
 	}
 	window.clear();
 
-	renderRegisters();
+	uint16_t pc_prev = bus.cpu.pc;
+	while (pc_prev == bus.cpu.pc)
+		bus.clock();
+
+	// renderRegisters();
 	renderScreen();
-	renderCode();
-	renderNametables();
+	// renderCode();
+	// renderNametables();
 
 	window.display();
 	return window.isOpen();

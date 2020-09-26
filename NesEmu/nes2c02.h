@@ -176,7 +176,6 @@ private:
 	uint8_t bg_shifter_attrib_high = 0x00;
 
 	sf::Color& getColorFromPalette(uint8_t palette, uint8_t pixel);
-	sf::Image& getScreenBuffer();
 
 public:
 	nes2c02();
@@ -193,6 +192,8 @@ public:
 
 	void clock();
 	void reset();
+
+	sf::Image& getScreenBuffer();
 
 	bool nmi = false;
 	bool frame_complete = false;

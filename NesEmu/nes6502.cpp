@@ -148,15 +148,18 @@ std::map<uint16_t, std::string> nes6502::dissamble(uint16_t start, uint16_t end)
 		}
 		else if (inst.addrmode == &nes6502::ABS)
 		{
-			ss << next() << next();
+			auto lo = next();
+			ss << next() << lo;
 		}
 		else if (inst.addrmode == &nes6502::ABX)
 		{
-			ss << next() << next() << ", X";
+			auto lo = next();
+			ss << next() << lo << ", X";
 		}
 		else if (inst.addrmode == &nes6502::ABY)
 		{
-			ss << next() << next() << ", Y";
+			auto lo = next();
+			ss << next() << lo << ", Y";
 		}
 		else if (inst.addrmode == &nes6502::ACC)
 		{
@@ -168,7 +171,8 @@ std::map<uint16_t, std::string> nes6502::dissamble(uint16_t start, uint16_t end)
 		}
 		else if (inst.addrmode == &nes6502::IND)
 		{
-			ss << "(" << next() << next() << ")";
+			auto lo = next();
+			ss << "(" << next() << lo << ")";
 		}
 		else if (inst.addrmode == &nes6502::IZX)
 		{
@@ -548,7 +552,7 @@ uint8_t nes6502::JSR()
 
 uint8_t nes6502::LDA()
 {
-	fetch();
+ 	fetch();
 	reg_a = fetched;
 
 	setFlag(Z, reg_a == 0);
