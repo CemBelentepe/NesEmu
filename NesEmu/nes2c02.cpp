@@ -45,7 +45,7 @@ nes2c02::nes2c02()
 	}
 
 	//fill the buffer with some color to determine its size
-	screenBuffer.create(256, 240, { 0,0,0,0 });
+	screenBuffer.create(256, 240, { 0,0,0,255 });
 
 }
 
@@ -417,7 +417,8 @@ void nes2c02::clock()
 	}
 
 	//Draw to buffer pixel by pixel x:(cycle -1), y:scanline;
-	screenBuffer.setPixel(cycle - 1, scanline, getColorFromPalette(bg_palette, bg_pixel));
+	if((cycle >= 1) && (cycle < 257) && (scanline >= 0) && (scanline < 240))
+		screenBuffer.setPixel(cycle - 1, scanline, getColorFromPalette(bg_palette, bg_pixel));
 
 	cycle++;
 	if (cycle >= 341)
