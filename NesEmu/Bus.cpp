@@ -20,7 +20,7 @@ uint8_t Bus::cpuRead(uint16_t addr)
 	else if (addr >= 0x0000 && addr <= 0x1FFF)
 		return cpuRam[addr & 0x07FF];
 	else if (addr >= 0x2000 && addr <= 0x3FFF)
-		ppu.cpuRead(addr & 0x007);
+		return ppu.cpuRead(addr & 0x007);
 
 	return data;
 }
