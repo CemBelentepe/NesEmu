@@ -12,6 +12,8 @@
 
 #include "NesScreen.h"
 
+#include <cstdlib>
+
 int main()
 {
 #if 1

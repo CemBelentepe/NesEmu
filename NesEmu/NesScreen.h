@@ -13,6 +13,7 @@ private:
 	std::shared_ptr<Cartridge> cart;
 	std::map<uint16_t, std::string> image;
 	sf::Font font;
+	bool stepMode = true;
 
 	void renderRegisters();
 	void renderScreen();

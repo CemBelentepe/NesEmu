@@ -20,7 +20,7 @@ void NesScreen::renderRegisters()
 		"\nY: " + hex(bus.cpu.reg_y) +
 		"\nSP: " + hex(bus.cpu.sp) +
 		"\nPC: " + hex(bus.cpu.pc);
-		// + "\nCyc:" + hex(bus.cpu.cycles);
+	// + "\nCyc:" + hex(bus.cpu.cycles);
 
 	sf::Text text(regInfo, font, 16);
 	text.setFillColor(sf::Color::White);
@@ -30,10 +30,11 @@ void NesScreen::renderRegisters()
 
 void NesScreen::renderScreen()
 {
-	sf::Image& buffer = bus.ppu.getScreenBuffer();
+	sf::Image buffer = bus.ppu.getScreenBuffer();
 	sf::Texture texture;
 	texture.loadFromImage(buffer);
-	sf::Sprite screen(texture);
+	sf::Sprite screen;
+	screen.setTexture(texture, true);
 	screen.setScale(2, 2);
 	window.draw(screen);
 }
@@ -46,7 +47,7 @@ void NesScreen::renderCode()
 	for (int i = 0; i < 7 && it != image.begin(); i++)
 		it--;
 
-	for (int i = 0; i < 16; i++)
+	for (int i = 0; i < 16 || it == image.end(); i++)
 	{
 		if (it->first == bus.cpu.pc)
 			text.setFillColor(sf::Color::Green);
@@ -93,18 +94,24 @@ bool NesScreen::update()
 			{
 				bus.reset();
 			}
+			else if (event.key.code == sf::Keyboard::D)
+			{
+				stepMode = !stepMode;
+			}
 		}
 	}
-	window.clear();
+	window.clear({ 52,52,52,255 });
 
-	uint16_t pc_prev = bus.cpu.pc;
-	while (pc_prev == bus.cpu.pc)
-		bus.clock();
+	if (!stepMode)
+	{
+		while (!bus.ppu.frame_complete)
+			bus.clock();
+	}
 
-	// renderRegisters();
+	renderRegisters();
 	renderScreen();
 	// renderCode();
-	// renderNametables();
+	renderNametables();
 
 	window.display();
 	return window.isOpen();

@@ -1,5 +1,6 @@
 #include "nes2c02.h"
 #include "Cartridge.h"
+#include <iostream>
 
 
 nes2c02::nes2c02()
@@ -243,7 +244,7 @@ uint8_t nes2c02::ppuRead(uint16_t addr)
 }
 
 //selects the right color from the palette and constructs a sf::color object
-sf::Color& nes2c02::getColorFromPalette(uint8_t palette, uint8_t pixel)
+sf::Color nes2c02::getColorFromPalette(uint8_t palette, uint8_t pixel)
 {
 	uint8_t* selected_color = ppuPalette[ppuRead(0x3F00 + (palette << 2) + pixel) & 0x3F];
 	sf::Color color_obj(selected_color[0], selected_color[1], selected_color[2], selected_color[3]);
@@ -379,15 +380,15 @@ void nes2c02::clock()
 				break;
 			}
 		}
+
+		if (cycle == 256) IncScrollY();
+
+		if (cycle == 257) ResetToTempAddressX();
+
+		if (cycle == 338 || cycle == 340) bg_next_id = ppuRead(0x2000 | (vram_addr.reg & 0x0FFF));
+
+		if (scanline == -1 && cycle >= 280 && cycle < 305) ResetToTempAddressY();
 	}
-
-	if (cycle == 256) IncScrollY();
-
-	if (cycle == 257) ResetToTempAddressX();
-
-	if (cycle == 338 || cycle == 340) bg_next_id = ppuRead(0x2000 | (vram_addr.reg & 0x0FFF));
-
-	if (scanline == -1 && cycle >= 280 && cycle < 305) ResetToTempAddressY();
 
 	if (scanline == 240) {};
 
@@ -417,8 +418,10 @@ void nes2c02::clock()
 	}
 
 	//Draw to buffer pixel by pixel x:(cycle -1), y:scanline;
-	if((cycle >= 1) && (cycle < 257) && (scanline >= 0) && (scanline < 240))
-		screenBuffer.setPixel(cycle - 1, scanline, getColorFromPalette(bg_palette, bg_pixel));
+	if ((cycle >= 1) && (cycle < 257) && (scanline >= 0) && (scanline < 240))
+	{
+		screenBuffer.setPixel(cycle - 1, scanline, getColorFromPalette(cycle % 4, cycle % 4));
+	}
 
 	cycle++;
 	if (cycle >= 341)
