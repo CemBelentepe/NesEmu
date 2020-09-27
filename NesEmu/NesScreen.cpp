@@ -42,12 +42,12 @@ void NesScreen::renderScreen()
 void NesScreen::renderCode()
 {
 	sf::Text text("", font, 16);
-	text.setPosition(650, 150);
+	text.setPosition(650, 120);
 	auto it = image.find(bus.cpu.pc);
-	for (int i = 0; i < 7 && it != image.begin(); i++)
-		it--;
+	for (int i = 0; i < 7 || it == image.begin(); i++)
+		--it;
 
-	for (int i = 0; i < 16 || it == image.end(); i++)
+	for (int i = 0; i < 32 || it == image.end(); i++)
 	{
 		if (it->first == bus.cpu.pc)
 			text.setFillColor(sf::Color::Green);
@@ -90,6 +90,19 @@ bool NesScreen::update()
 				while (pc_prev == bus.cpu.pc)
 					bus.clock();
 			}
+			else if (event.key.code == sf::Keyboard::A)
+			{
+				for (int i = 0; i < 256; i++)
+				{
+					bus.clock();
+				}
+			}
+			else if (event.key.code == sf::Keyboard::T)
+			{
+				uint16_t addr = bus.cpu.pc;
+				while (!(bus.cpu.pc > addr))
+					bus.clock();
+			}
 			else if (event.key.code == sf::Keyboard::R)
 			{
 				bus.reset();
@@ -104,6 +117,7 @@ bool NesScreen::update()
 
 	if (!stepMode)
 	{
+		bus.ppu.frame_complete = false;
 		while (!bus.ppu.frame_complete)
 			bus.clock();
 	}

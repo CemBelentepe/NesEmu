@@ -59,7 +59,6 @@ void nes2c02::cpuWrite(uint16_t addr, uint8_t data)
 {
 	switch (addr)
 	{
-
 	case 0x0000:
 		control_reg.reg = data;
 		tram_addr.x_nametable = control_reg.x_nametable;
@@ -420,7 +419,8 @@ void nes2c02::clock()
 	//Draw to buffer pixel by pixel x:(cycle -1), y:scanline;
 	if ((cycle >= 1) && (cycle < 257) && (scanline >= 0) && (scanline < 240))
 	{
-		screenBuffer.setPixel(cycle - 1, scanline, getColorFromPalette(cycle % 4, cycle % 4));
+		// TODO!!
+		screenBuffer.setPixel(cycle - 1, scanline, getColorFromPalette(bg_palette, bg_pixel));
 	}
 
 	cycle++;

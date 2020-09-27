@@ -111,3 +111,9 @@ bool Cartridge::ppuRead(uint16_t addr, uint8_t& data)
 
 	return false;
 }
+
+void Cartridge::reset()
+{
+	if (mapper != nullptr)
+		mapper->reset();
+}

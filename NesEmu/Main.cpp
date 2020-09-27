@@ -17,7 +17,7 @@
 int main()
 {
 #if 1
-	NesScreen nes("..\\tests\\Donkey Kong.nes");
+	NesScreen nes("..\\tests\\nestest.nes");
 	nes.init();
 	nes.printImage("out.txt");
 	bool run = true;
