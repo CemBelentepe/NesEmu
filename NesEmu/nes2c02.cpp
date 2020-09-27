@@ -420,7 +420,7 @@ void nes2c02::clock()
 	//Draw to buffer pixel by pixel x:(cycle -1), y:scanline;
 	if ((cycle >= 1) && (cycle < 257) && (scanline >= 0) && (scanline < 240))
 	{
-		screenBuffer.setPixel(cycle - 1, scanline, getColorFromPalette(cycle % 4, cycle % 4));
+		screenBuffer.setPixel(cycle - 1, scanline, getColorFromPalette(bg_palette, bg_pixel));
 	}
 
 	cycle++;
