@@ -139,26 +139,27 @@ void NesScreen::printImage(std::string filename)
 	while (it != image.end())
 	{
 		uint8_t data = bus.cpuRead(it->first);
-		if (data == 0)
-		{
-			file << "0x" << hex(it->first) << ": [0x00]\n";
-			while (data == 0)
-			{
-				data = bus.cpuRead(it->first);
-				it++;
-			}
-		}
-		else if (data == 0xFF)
-		{
-			file << "0x" << hex(it->first) << ": [0xFF]\n";
-			while (data == 0xFF)
-			{
-				data = bus.cpuRead(it->first);
-				it++;
-			}
-		}
-		else
-			file << it->second << "\n";
+		// if (data == 0)
+		// {
+		// 	file << "0x" << hex(it->first) << ": [0x00]\n";
+		// 	while (data == 0)
+		// 	{
+		// 		data = bus.cpuRead(it->first);
+		// 		it++;
+		// 	}
+		// }
+		// else if (data == 0xFF)
+		// {
+		// 	file << "0x" << hex(it->first) << ": [0xFF]\n";
+		// 	while (data == 0xFF)
+		// 	{
+		// 		data = bus.cpuRead(it->first);
+		// 		it++;
+		// 	}
+		// 	file << it->second << "\n";
+		// }
+		// else
+		file << it->second << "\n";
 		it++;
 	}
 

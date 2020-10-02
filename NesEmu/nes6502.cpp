@@ -14,7 +14,7 @@ uint8_t nes6502::fetch()
 void nes6502::reset()
 {
 	addr_abs = 0xFFFC;
-	// pc = read(addr_abs + 1) << 8 | read(addr_abs);
+	// pc = (read(addr_abs + 1) << 8) | read(addr_abs);
 	pc = 0xc000; // TODO: delete it
 
 	reg_a = 0;
@@ -252,6 +252,8 @@ uint8_t nes6502::ACC()
 uint8_t nes6502::REL()
 {
 	addr_rel = read(pc++);
+	if (addr_rel & 0x80)
+		addr_rel |= 0xFF00;
 	return 0;
 }
 
