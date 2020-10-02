@@ -44,10 +44,10 @@ void NesScreen::renderCode()
 	sf::Text text("", font, 16);
 	text.setPosition(650, 120);
 	auto it = image.find(bus.cpu.pc);
-	for (int i = 0; i < 7 || it == image.begin(); i++)
+	for (int i = 0; i < 7 && it != image.begin(); i++)
 		--it;
 
-	for (int i = 0; i < 32 || it == image.end(); i++)
+	for (int i = 0; i < 20 && it != image.end(); i++)
 	{
 		if (it->first == bus.cpu.pc)
 			text.setFillColor(sf::Color::Green);
@@ -71,7 +71,7 @@ void NesScreen::init()
 {
 	font.loadFromFile("..\\res\\consola.ttf");
 	bus.insertCartridge(cart);
-	image = bus.cpu.dissamble(0x0000, 0xFFFF);
+	image = bus.cpu.dissamble(0xc000, 0xFFFF);
 	bus.reset();
 }
 
@@ -124,7 +124,7 @@ bool NesScreen::update()
 
 	renderRegisters();
 	renderScreen();
-	// renderCode();
+	renderCode();
 	renderNametables();
 
 	window.display();
@@ -134,7 +134,7 @@ bool NesScreen::update()
 void NesScreen::printImage(std::string filename)
 {
 	std::ofstream file(filename);
-	auto it = image.find(0x0000);
+	auto it = image.find(0xc000);
 
 	while (it != image.end())
 	{
