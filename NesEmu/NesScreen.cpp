@@ -42,12 +42,12 @@ void NesScreen::renderScreen()
 void NesScreen::renderCode()
 {
 	sf::Text text("", font, 16);
-	text.setPosition(650, 150);
+	text.setPosition(650, 120);
 	auto it = image.find(bus.cpu.pc);
 	for (int i = 0; i < 7 && it != image.begin(); i++)
-		it--;
+		--it;
 
-	for (int i = 0; i < 16 || it == image.end(); i++)
+	for (int i = 0; i < 20 && it != image.end(); i++)
 	{
 		if (it->first == bus.cpu.pc)
 			text.setFillColor(sf::Color::Green);
@@ -71,7 +71,7 @@ void NesScreen::init()
 {
 	font.loadFromFile("..\\res\\consola.ttf");
 	bus.insertCartridge(cart);
-	image = bus.cpu.dissamble(0x0000, 0xFFFF);
+	image = bus.cpu.dissamble(0xc000, 0xFFFF);
 	bus.reset();
 }
 
@@ -90,6 +90,19 @@ bool NesScreen::update()
 				while (pc_prev == bus.cpu.pc)
 					bus.clock();
 			}
+			else if (event.key.code == sf::Keyboard::A)
+			{
+				for (int i = 0; i < 256; i++)
+				{
+					bus.clock();
+				}
+			}
+			else if (event.key.code == sf::Keyboard::T)
+			{
+				uint16_t addr = bus.cpu.pc;
+				while (!(bus.cpu.pc > addr))
+					bus.clock();
+			}
 			else if (event.key.code == sf::Keyboard::R)
 			{
 				bus.reset();
@@ -104,13 +117,14 @@ bool NesScreen::update()
 
 	if (!stepMode)
 	{
+		bus.ppu.frame_complete = false;
 		while (!bus.ppu.frame_complete)
 			bus.clock();
 	}
 
 	renderRegisters();
 	renderScreen();
-	// renderCode();
+	renderCode();
 	renderNametables();
 
 	window.display();
@@ -120,31 +134,32 @@ bool NesScreen::update()
 void NesScreen::printImage(std::string filename)
 {
 	std::ofstream file(filename);
-	auto it = image.find(0x0000);
+	auto it = image.find(0xc000);
 
 	while (it != image.end())
 	{
 		uint8_t data = bus.cpuRead(it->first);
-		if (data == 0)
-		{
-			file << "0x" << hex(it->first) << ": [0x00]\n";
-			while (data == 0)
-			{
-				data = bus.cpuRead(it->first);
-				it++;
-			}
-		}
-		else if (data == 0xFF)
-		{
-			file << "0x" << hex(it->first) << ": [0xFF]\n";
-			while (data == 0xFF)
-			{
-				data = bus.cpuRead(it->first);
-				it++;
-			}
-		}
-		else
-			file << it->second << "\n";
+		// if (data == 0)
+		// {
+		// 	file << "0x" << hex(it->first) << ": [0x00]\n";
+		// 	while (data == 0)
+		// 	{
+		// 		data = bus.cpuRead(it->first);
+		// 		it++;
+		// 	}
+		// }
+		// else if (data == 0xFF)
+		// {
+		// 	file << "0x" << hex(it->first) << ": [0xFF]\n";
+		// 	while (data == 0xFF)
+		// 	{
+		// 		data = bus.cpuRead(it->first);
+		// 		it++;
+		// 	}
+		// 	file << it->second << "\n";
+		// }
+		// else
+		file << it->second << "\n";
 		it++;
 	}
 

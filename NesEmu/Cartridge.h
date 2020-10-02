@@ -36,6 +36,8 @@ public:
 	bool ppuWrite(uint16_t addr, uint8_t data);
 	bool ppuRead(uint16_t addr, uint8_t& data);
 
+	void reset();
+
 	bool imageValid() { return m_imageValid; }
 };
 

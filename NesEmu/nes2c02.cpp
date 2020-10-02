@@ -28,7 +28,7 @@ nes2c02::nes2c02()
 	{
 		for (int j = 0; j < 1024; j++)
 		{
-			nameTable[i][j] = 0;
+			nameTable[i][j] = 128;
 		}
 	}
 
@@ -36,7 +36,7 @@ nes2c02::nes2c02()
 	{
 		for (int j = 0; j < 4096; j++)
 		{
-			patternTable[i][j] = 0;
+			patternTable[i][j] = 128;
 		}
 	}
 
@@ -59,7 +59,6 @@ void nes2c02::cpuWrite(uint16_t addr, uint8_t data)
 {
 	switch (addr)
 	{
-
 	case 0x0000:
 		control_reg.reg = data;
 		tram_addr.x_nametable = control_reg.x_nametable;
@@ -164,9 +163,11 @@ void nes2c02::ppuWrite(uint16_t addr, uint8_t data)
 	addr &= 0x3FFF;
 
 	if (cartridge->ppuWrite(addr, data)) {}
-	else if (addr >= 0x0000 && 0x1FFF)
+	else if (addr >= 0x0000 && addr <= 0x1FFF)
 	{
-		patternTable[(addr & 0x1000) >> 12][addr & 0x0FFF] = data;
+		size_t i = (addr & 0x1000) >> 12;
+		size_t j = addr & 0x0FFF;
+		patternTable[i][j] = data;
 	}
 	else if (addr >= 0x2000 && addr <= 0x3EFF)
 	{
@@ -259,11 +260,11 @@ sf::Image& nes2c02::getScreenBuffer()
 void nes2c02::clock()
 {
 	//Lambda functions to simplify the implementation
-	uint8_t rendering = mask_reg.bg_show || mask_reg.sprite_show;
+	auto rendering = [&]() {return mask_reg.bg_show || mask_reg.sprite_show; };
 
 	auto IncScrollX = [&]()
 	{
-		if (rendering)
+		if (rendering())
 		{
 			if (vram_addr.x_coarse == 31)
 			{
@@ -279,7 +280,7 @@ void nes2c02::clock()
 
 	auto IncScrollY = [&]()
 	{
-		if (rendering)
+		if (rendering())
 		{
 			if (vram_addr.fine_y < 7)
 			{
@@ -307,7 +308,7 @@ void nes2c02::clock()
 
 	auto ResetToTempAddressX = [&]()
 	{
-		if (rendering)
+		if (rendering())
 		{
 			vram_addr.x_coarse = tram_addr.x_coarse;
 			vram_addr.x_nametable = tram_addr.x_nametable;
@@ -316,7 +317,7 @@ void nes2c02::clock()
 
 	auto ResetToTempAddressY = [&]()
 	{
-		if (rendering)
+		if (rendering())
 		{
 			vram_addr.y_coarse = tram_addr.y_coarse;
 			vram_addr.y_nametable = tram_addr.y_nametable;
@@ -420,6 +421,10 @@ void nes2c02::clock()
 	//Draw to buffer pixel by pixel x:(cycle -1), y:scanline;
 	if ((cycle >= 1) && (cycle < 257) && (scanline >= 0) && (scanline < 240))
 	{
+		// TODO!!
+		// size_t i = (cycle - 1) / 4;
+		// size_t j = scanline / 4;
+		// screenBuffer.setPixel(cycle - 1, scanline, sf::Color(patternTable[0][j*32+i], 0, 0, 255));
 		screenBuffer.setPixel(cycle - 1, scanline, getColorFromPalette(bg_palette, bg_pixel));
 	}
 

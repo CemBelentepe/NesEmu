@@ -34,14 +34,15 @@ Cartridge::Cartridge(std::string filePath)
 	if (header.flags6 & 0b00000100)
 		file.seekg(512, std::ios_base::cur);
 
-	this->mapperID = (header.flags6 >> 4) | (header.flags7 & 0xF0);
+	this->mapperID = ((header.flags7 >> 4) << 4) | (header.flags6 >> 4);
 	this->mirror = (header.flags6 & 0x01) ? VERTICAL : HORIZONTAL;
+
 	this->nPRGBank = header.nPRGRom;
-	this->memPRG.resize(nPRGBank * 16384);
+	this->memPRG.resize((size_t)nPRGBank * 16384);
 	file.read((char*)memPRG.data(), memPRG.size());
 
 	this->nCHRBank = header.nCHRRom;
-	this->memCHR.resize(nCHRBank * 8192);
+	this->memCHR.resize((size_t)(nCHRBank == 0 ? 1 : nCHRBank) * 8192);
 	file.read((char*)memCHR.data(), memCHR.size());
 
 	switch (this->mapperID)
@@ -110,4 +111,10 @@ bool Cartridge::ppuRead(uint16_t addr, uint8_t& data)
 	}
 
 	return false;
+}
+
+void Cartridge::reset()
+{
+	if (mapper != nullptr)
+		mapper->reset();
 }

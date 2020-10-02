@@ -14,7 +14,8 @@ uint8_t nes6502::fetch()
 void nes6502::reset()
 {
 	addr_abs = 0xFFFC;
-	pc = read(addr_abs + 1) << 8 | read(addr_abs);
+	// pc = (read(addr_abs + 1) << 8) | read(addr_abs);
+	pc = 0xc000; // TODO: delete it
 
 	reg_a = 0;
 	reg_x = 0;
@@ -251,6 +252,8 @@ uint8_t nes6502::ACC()
 uint8_t nes6502::REL()
 {
 	addr_rel = read(pc++);
+	if (addr_rel & 0x80)
+		addr_rel |= 0xFF00;
 	return 0;
 }
 
@@ -541,11 +544,10 @@ uint8_t nes6502::JMP()
 
 uint8_t nes6502::JSR()
 {
-	fetch();
 	uint16_t pushed = pc - 1;
+	write(0x0100 | sp--, (pushed >> 8) & 0xFF);
 	write(0x0100 | sp--, pushed & 0xFF);
-	write(0x0100 | sp--, pushed >> 8);
-	pc = fetched;
+	pc = addr_abs;
 
 	return 0;
 }
@@ -670,8 +672,15 @@ uint8_t nes6502::ROR()
 
 uint8_t nes6502::RTI()
 {
-	status_reg = read(0x0100 | ++sp);
-	pc = read(0x0100 | ++sp) | read(0x0100 | ++sp) << 8;
+	sp++;
+	status_reg = read(0x0100 + sp);
+	status_reg &= ~B;
+	status_reg &= ~U;
+
+	sp++;
+	pc = (uint16_t)read(0x0100 + sp);
+	sp++;
+	pc |= (uint16_t)read(0x0100 + sp) << 8;
 	return 0;
 }
 
@@ -680,7 +689,7 @@ uint8_t nes6502::RTS()
 	sp++;
 	pc = (uint16_t)read(0x0100 + sp);
 	sp++;
-	pc = (uint16_t)read(0x0100 + sp) << 8;
+	pc |= (uint16_t)read(0x0100 + sp) << 8;
 	pc++;
 
 	return 0;
