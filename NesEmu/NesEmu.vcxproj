@@ -181,6 +181,7 @@
     <ClInclude Include="nes2c02.h" />
     <ClInclude Include="nes6502.h" />
     <ClInclude Include="NesScreen.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
