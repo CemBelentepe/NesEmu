@@ -41,7 +41,7 @@ public:
 
 private:
 	uint16_t addr_abs = 0;
-	int8_t   addr_rel = 0;
+	uint16_t  addr_rel = 0;
 	uint8_t  fetched = 0;
 	uint8_t	 opcode = 0;
 	Bus* bus;

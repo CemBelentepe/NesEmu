@@ -14,8 +14,8 @@ uint8_t nes6502::fetch()
 void nes6502::reset()
 {
 	addr_abs = 0xFFFC;
-	// pc = (read(addr_abs + 1) << 8) | read(addr_abs);
-	pc = 0xc000; // TODO: delete it
+	pc = (read(addr_abs + 1) << 8) | read(addr_abs);
+	//pc = 0xc000; // TODO: delete it
 
 	reg_a = 0;
 	reg_x = 0;
@@ -323,7 +323,7 @@ uint8_t nes6502::AND()
 uint8_t nes6502::ASL()
 {
 	fetch();
-	uint16_t temp = fetched << 1;
+	uint16_t temp = (uint16_t)fetched << 1;
 	setFlag(C, (temp & 0xFF00) > 0);
 	setFlag(Z, (temp & 0x00FF) == 0);
 	setFlag(N, temp & 0x0080);
@@ -438,11 +438,11 @@ uint8_t nes6502::CLV()
 uint8_t nes6502::CMP()
 {
 	fetch();
-	uint16_t val = reg_a - fetched;
+	uint16_t val = (uint16_t)reg_a - (uint16_t)fetched;
 
 	setFlag(C, reg_a >= fetched);
-	setFlag(Z, reg_a == fetched);
-	setFlag(N, val & 0x80);
+	setFlag(Z, (val & 0x00FF) == 0x0000);
+	setFlag(N, val & 0x0080);
 
 	return 1;
 }
@@ -556,7 +556,6 @@ uint8_t nes6502::LDA()
 {
  	fetch();
 	reg_a = fetched;
-
 	setFlag(Z, reg_a == 0);
 	setFlag(N, reg_a & 0x80);
 
@@ -599,6 +598,16 @@ uint8_t nes6502::LSR()
 
 uint8_t nes6502::NOP()
 {
+	switch (opcode) {
+	case 0x1C:
+	case 0x3C:
+	case 0x5C:
+	case 0x7C:
+	case 0xDC:
+	case 0xFC:
+		return 1;
+		break;
+	}
 	return 0;
 }
 
@@ -606,8 +615,8 @@ uint8_t nes6502::ORA()
 {
 	fetch();
 	reg_a = reg_a | fetched;
-	setFlag(Z, reg_y == 0x00);
-	setFlag(N, reg_y & 0x80);
+	setFlag(Z, reg_a == 0x00);
+	setFlag(N, reg_a & 0x80);
 	return 1;
 }
 
@@ -620,7 +629,9 @@ uint8_t nes6502::PHA()
 
 uint8_t nes6502::PHP()
 {
-	write(0x0100 | sp--, status_reg);
+	write(0x0100 | sp--, status_reg | B | U);
+	setFlag(B, 0);
+	setFlag(U, 0);
 	return 0;
 }
 
@@ -636,6 +647,7 @@ uint8_t nes6502::PLP()
 {
 	sp++;
 	status_reg = read(0x0100 + sp);
+	setFlag(U, 1);
 	return 0;
 }
 
@@ -656,15 +668,15 @@ uint8_t nes6502::ROL()
 uint8_t nes6502::ROR()
 {
 	fetch();
-	uint8_t temp = (fetched >> 1) | (fetched & 0x80);
+	uint16_t temp = (uint16_t)(getFlag(C) << 7) | (fetched >> 1);
 
 	if (instructions[opcode].addrmode == &nes6502::ACC)
-		reg_a = temp;
+		reg_a = temp & 0x00FF;
 	else
-		write(addr_abs, temp);
+		write(addr_abs, temp & 0x00FF);
 
-	setFlag(C, 0);
-	setFlag(Z, temp == 0);
+	setFlag(C, fetched & 0x01);
+	setFlag(Z, (temp & 0x00FF) == 0x00);
 	setFlag(N, temp & 0x80);
 
 	return 0;
@@ -742,15 +754,13 @@ uint8_t nes6502::STA()
 
 uint8_t nes6502::STX()
 {
-	fetch();
-	write(fetched, reg_x);
+	write(addr_abs, reg_x);
 	return 0;
 }
 
 uint8_t nes6502::STY()
 {
-	fetch();
-	write(fetched, reg_y);
+	write(addr_abs, reg_y);
 	return 0;
 }
 
@@ -813,10 +823,10 @@ void nes6502::branch(Flags flag, uint8_t condition)
 {
 	if (getFlag(flag) == condition)
 	{
-		uint32_t target = (int32_t)pc + addr_rel;
+		addr_abs = pc + addr_rel;
 		cycles++;
-		if ((target & 0xFF00) != (pc & 0xFF00))
+		if ((addr_abs & 0xFF00) != (pc & 0xFF00))
 			cycles++;
-		pc = target;
+		pc = addr_abs;
 	}
 }
