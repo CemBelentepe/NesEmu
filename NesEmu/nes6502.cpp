@@ -545,8 +545,8 @@ uint8_t nes6502::JMP()
 uint8_t nes6502::JSR()
 {
 	uint16_t pushed = pc - 1;
-	write(0x0100 | sp--, (pushed >> 8) & 0xFF);
-	write(0x0100 | sp--, pushed & 0xFF);
+	write(0x0100 + sp--, (pushed >> 8) & 0xFF);
+	write(0x0100 + sp--, pushed & 0xFF);
 	pc = addr_abs;
 
 	return 0;
@@ -629,7 +629,7 @@ uint8_t nes6502::PHA()
 
 uint8_t nes6502::PHP()
 {
-	write(0x0100 | sp--, status_reg | B | U);
+	write(0x0100 + sp--, status_reg | B | U);
 	setFlag(B, 0);
 	setFlag(U, 0);
 	return 0;
@@ -637,7 +637,7 @@ uint8_t nes6502::PHP()
 
 uint8_t nes6502::PLA()
 {
-	reg_a = read(0x0100 | ++sp);
+	reg_a = read(0x0100 + ++sp);
 	setFlag(Z, reg_a == 0);
 	setFlag(N, reg_a & 0xFF);
 	return 0;
