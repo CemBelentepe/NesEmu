@@ -15,7 +15,7 @@ void nes6502::reset()
 {
 	addr_abs = 0xFFFC;
 	pc = (read(addr_abs + 1) << 8) | read(addr_abs);
-	//pc = 0xc000; // TODO: delete it
+	// pc = 0xc000; // TODO: delete it
 
 	reg_a = 0;
 	reg_x = 0;

@@ -260,11 +260,11 @@ sf::Image& nes2c02::getScreenBuffer()
 void nes2c02::clock()
 {
 	//Lambda functions to simplify the implementation
-	auto rendering = [&]() {return mask_reg.bg_show || mask_reg.sprite_show; };
+	// auto rendering = [&]() {return mask_reg.bg_show || mask_reg.sprite_show; };
 
 	auto IncScrollX = [&]()
 	{
-		if (rendering())
+		if (mask_reg.bg_show || mask_reg.sprite_show)
 		{
 			if (vram_addr.x_coarse == 31)
 			{
@@ -280,7 +280,7 @@ void nes2c02::clock()
 
 	auto IncScrollY = [&]()
 	{
-		if (rendering())
+		if (mask_reg.bg_show || mask_reg.sprite_show)
 		{
 			if (vram_addr.fine_y < 7)
 			{
@@ -308,7 +308,7 @@ void nes2c02::clock()
 
 	auto ResetToTempAddressX = [&]()
 	{
-		if (rendering())
+		if (mask_reg.bg_show || mask_reg.sprite_show)
 		{
 			vram_addr.x_coarse = tram_addr.x_coarse;
 			vram_addr.x_nametable = tram_addr.x_nametable;
@@ -317,7 +317,7 @@ void nes2c02::clock()
 
 	auto ResetToTempAddressY = [&]()
 	{
-		if (rendering())
+		if (mask_reg.bg_show || mask_reg.sprite_show)
 		{
 			vram_addr.y_coarse = tram_addr.y_coarse;
 			vram_addr.y_nametable = tram_addr.y_nametable;
@@ -384,14 +384,18 @@ void nes2c02::clock()
 
 		if (cycle == 256) IncScrollY();
 
-		if (cycle == 257) ResetToTempAddressX();
+		if (cycle == 257)
+		{
+			LoadBGShifters();
+			ResetToTempAddressX();
+		}
 
 		if (cycle == 338 || cycle == 340) bg_next_id = ppuRead(0x2000 | (vram_addr.reg & 0x0FFF));
 
 		if (scanline == -1 && cycle >= 280 && cycle < 305) ResetToTempAddressY();
 	}
 
-	if (scanline == 240) {};
+	if (scanline == 240) {}
 
 	if (scanline >= 241 && scanline < 261)
 	{

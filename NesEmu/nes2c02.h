@@ -170,10 +170,10 @@ private:
 	uint8_t bg_next_pattern_low = 0x00;
 	uint8_t bg_next_pattern_high = 0x00;
 
-	uint8_t bg_shifter_pattern_low = 0x00;
-	uint8_t bg_shifter_pattern_high = 0x00;
-	uint8_t bg_shifter_attrib_low = 0x00;
-	uint8_t bg_shifter_attrib_high = 0x00;
+	uint16_t bg_shifter_pattern_low = 0x00;
+	uint16_t bg_shifter_pattern_high = 0x00;
+	uint16_t bg_shifter_attrib_low = 0x00;
+	uint16_t bg_shifter_attrib_high = 0x00;
 
 	sf::Color getColorFromPalette(uint8_t palette, uint8_t pixel);
 
