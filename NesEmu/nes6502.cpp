@@ -583,14 +583,14 @@ uint8_t nes6502::LDY()
 uint8_t nes6502::LSR()
 {
 	fetch();
-	uint8_t temp = fetched << 1;
+	uint8_t temp = fetched >> 1;
 	if (instructions[opcode].addrmode == &nes6502::ACC)
 		reg_a = temp;
 	else
 		write(addr_abs, temp);
 
-	setFlag(C, temp == 0);
-	setFlag(Z, 0);
+	setFlag(C, fetched & 0x0001);
+	setFlag(Z, (temp & 0x00FF) == 0x0000);
 	setFlag(N, temp & 0x80);
 
 	return 0;
